@@ -17,6 +17,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__IntervalNotPassed();
     error Raffle__RaffleNotOpen();
     error Raffle__TransferFailed();
+    error Raffle__UpkeepNotNeeded(
+        uint256 balance,
+        uint256 players,
+        uint256 state
+    );
 
     enum RaffleState {
         OPEN,
@@ -40,6 +45,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     RaffleState private s_raffleState;
     address private s_recentWinner;
 
+    event RequestedRaffleWinner(uint256 indexed requestId);
     event EnteredRaffle(address indexed user);
     event PickedWinner(address indexed winner);
 
@@ -71,11 +77,30 @@ contract Raffle is VRFConsumerBaseV2Plus {
         emit EnteredRaffle(msg.sender);
     }
 
-    function pickWinner() public {
-        if (block.timestamp - s_lastTimestamp < i_interval) {
-            revert Raffle__IntervalNotPassed();
+    // @dev This function is called by Chainlink Automation to verify if upkeep is needed
+    function checkUpkeep(
+        bytes memory /* checkData */
+    ) public view returns (bool upkeepNeeded, bytes memory /* performData */) {
+        bool timeHasPassed = block.timestamp - s_lastTimestamp < i_interval;
+        bool isOpen = s_raffleState == RaffleState.OPEN;
+        bool hasBalance = address(this).balance > 0;
+        bool hasPlayers = s_players.length > 0;
+        upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasPlayers;
+        return (upkeepNeeded, "0x0");
+    }
+
+    // @dev This function is called by Chainlink Automation to perform the upkeep
+    function performUpkeep(bytes calldata /* performData */) external {
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        if (!upkeepNeeded) {
+            revert Raffle__UpkeepNotNeeded(
+                address(this).balance,
+                s_players.length,
+                uint256(s_raffleState)
+            );
         }
         s_raffleState = RaffleState.CALCULATING;
+
         uint256 requestId = i_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
                 keyHash: i_gasLane,
@@ -88,6 +113,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
                 )
             })
         );
+
+        emit RequestedRaffleWinner(requestId);
     }
 
     /**
@@ -103,10 +130,12 @@ contract Raffle is VRFConsumerBaseV2Plus {
         s_recentWinner = winner;
         s_players = new address payable[](0);
         s_lastTimestamp = block.timestamp;
+
         (bool success, ) = winner.call{value: address(this).balance}("");
         if (!success) {
             revert Raffle__TransferFailed();
         }
+
         emit PickedWinner(winner);
     }
 
