@@ -23,6 +23,7 @@ contract RaffleTest is Test {
 
     function setUp() external {
         DeployRaffle deployRaffle = new DeployRaffle();
+
         (raffle, helperConfig) = deployRaffle.run();
         (
             subscriptionId,
@@ -32,14 +33,21 @@ contract RaffleTest is Test {
             callbackGasLimit,
             vrfCoordinator
         ) = helperConfig.activeNetworkConfig();
+
+        vm.deal(PLAYER, STARTING_USER_BALANCE);
     }
 
-    function testRaffleRevertsWhenYouDontPayEnough() external {
+    function testRaffleRevertsWhenYouDontPayEnough() public {
         vm.prank(PLAYER);
         vm.expectRevert(Raffle.Raffle__NotEnoughEth.selector);
         raffle.enterRaffle();
     }
 
-    // testRaffleRevertsWhenYouDonPayEnough
-    // testRaffleRecordsPlayersWhenTheyEnter
+    function testRaffleRecordsPlayersWhenTheyEnter() public {
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        assert(raffle.getPlayer(0) == PLAYER);
+    }
+
+    // testEmitsEventOnEntrance
 }
