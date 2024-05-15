@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import {Script} from "forge-std/Script.sol";
-import {VRFCoordinatorV2Mock} from "@chainlink/contracts/src/v0.8/mocks/VRFCoordinatorV2Mock.sol";
+import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/mocks/VRFCoordinatorV2_5Mock.sol";
 import {Raffle} from "../src/Raffle.sol";
 
 contract HelperConfig is Script {
@@ -16,6 +16,7 @@ contract HelperConfig is Script {
         uint256 entranceFee;
         uint32 callbackGasLimit;
         address vrfCoordinator;
+        address link;
     }
 
     constructor() {
@@ -33,7 +34,8 @@ contract HelperConfig is Script {
             automationUpdateInterval: 30, // 30 seconds
             entranceFee: 0.01 ether,
             callbackGasLimit: 500000, // 500,000 gas
-            vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B
+            vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
+            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789
         });
 
         return sepoliaConfig;
@@ -46,11 +48,13 @@ contract HelperConfig is Script {
 
         uint96 baseFee = 0.25 ether;
         uint96 gasPriceLink = 1e9;
+        int256 weiPerUnitLink = 0.50 ether;
 
         vm.startBroadcast();
-        VRFCoordinatorV2Mock vrfCoordinatorMock = new VRFCoordinatorV2Mock(
+        VRFCoordinatorV2_5Mock vrfCoordinatorMock = new VRFCoordinatorV2_5Mock(
             baseFee,
-            gasPriceLink
+            gasPriceLink,
+            weiPerUnitLink
         );
         vm.stopBroadcast();
 
