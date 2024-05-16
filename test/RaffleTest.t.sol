@@ -33,7 +33,8 @@ contract RaffleTest is Test {
             interval,
             entranceFee,
             callbackGasLimit,
-            vrfCoordinator
+            vrfCoordinator,
+
         ) = helperConfig.activeNetworkConfig();
 
         vm.deal(PLAYER, STARTING_USER_BALANCE);

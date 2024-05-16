@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 
 import {Script} from "forge-std/Script.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/mocks/VRFCoordinatorV2_5Mock.sol";
+import {LinkToken} from "../test/mocks/LinkToken.sol";
 import {Raffle} from "../src/Raffle.sol";
 
 contract HelperConfig is Script {
@@ -56,6 +57,7 @@ contract HelperConfig is Script {
             gasPriceLink,
             weiPerUnitLink
         );
+        LinkToken link = new LinkToken();
         vm.stopBroadcast();
 
         return
@@ -65,7 +67,8 @@ contract HelperConfig is Script {
                 automationUpdateInterval: 30,
                 entranceFee: 0.01 ether,
                 callbackGasLimit: 500000,
-                vrfCoordinator: address(vrfCoordinatorMock)
+                vrfCoordinator: address(vrfCoordinatorMock),
+                link: address(link)
             });
     }
 }
