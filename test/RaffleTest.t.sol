@@ -3,6 +3,7 @@
 pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
+import {Vm} from "forge-std/Vm.sol";
 import {Raffle} from "../src/Raffle.sol";
 import {DeployRaffle} from "../script/DeployRaffle.s.sol";
 import {HelperConfig} from "../script/HelperConfig.s.sol";
@@ -22,6 +23,14 @@ contract RaffleTest is Test {
     uint public constant STARTING_USER_BALANCE = 10 ether;
 
     event EnteredRaffle(address indexed user);
+
+    modifier raffleEnteredAndTimePassed() {
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        _;
+    }
 
     function setUp() external {
         DeployRaffle deployRaffle = new DeployRaffle();
@@ -127,5 +136,19 @@ contract RaffleTest is Test {
             )
         );
         raffle.performUpkeep("");
+    }
+
+    function testPerformUpkeepUpdatesRaffleStateAndEmitsRequestId()
+        public
+        raffleEnteredAndTimePassed
+    {
+        vm.recordLogs(); // record all logs from contract events
+        raffle.performUpkeep(""); // will emit RequestedRaffleWinner
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestedId = entries[1].topics[1]; // entries are the log arrays. RequestedRaffleWinner is the second event emited
+
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+        assert(uint256(requestedId) > 0);
+        assert(uint256(raffleState) == 1);
     }
 }
