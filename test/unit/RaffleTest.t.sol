@@ -5,9 +5,9 @@ pragma solidity ^0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/mocks/VRFCoordinatorV2_5Mock.sol";
-import {Raffle} from "../src/Raffle.sol";
-import {DeployRaffle} from "../script/DeployRaffle.s.sol";
-import {HelperConfig} from "../script/HelperConfig.s.sol";
+import {Raffle} from "../../src/Raffle.sol";
+import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
+import {HelperConfig} from "../../script/HelperConfig.s.sol";
 
 contract RaffleTest is Test {
     error InvalidRequest();
