@@ -8,6 +8,8 @@ import {LinkToken} from "../test/mocks/LinkToken.sol";
 import {Raffle} from "../src/Raffle.sol";
 
 contract HelperConfig is Script {
+    uint256 public constant DEFAULT_ANVIL_KEY =
+        0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
     NetworkConfig public activeNetworkConfig;
 
     struct NetworkConfig {
@@ -18,6 +20,7 @@ contract HelperConfig is Script {
         uint32 callbackGasLimit;
         address vrfCoordinator;
         address link;
+        uint256 deployerKey;
     }
 
     constructor() {
@@ -28,15 +31,16 @@ contract HelperConfig is Script {
         }
     }
 
-    function getSepoliaEthConfig() public pure returns (NetworkConfig memory) {
+    function getSepoliaEthConfig() public view returns (NetworkConfig memory) {
         NetworkConfig memory sepoliaConfig = NetworkConfig({
-            subscriptionId: 0, // If left as 0, our scripts will create one!
+            subscriptionId: 99855506465353961420048313712796949031881565092000758800594249423870785383896, // If left as 0, our scripts will create one!
             gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
             automationUpdateInterval: 30, // 30 seconds
             entranceFee: 0.01 ether,
             callbackGasLimit: 500000, // 500,000 gas
             vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
-            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789
+            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
+            deployerKey: vm.envUint("PRIVATE_KEY")
         });
 
         return sepoliaConfig;
@@ -51,7 +55,7 @@ contract HelperConfig is Script {
         uint96 gasPriceLink = 1e9;
         int256 weiPerUnitLink = 0.50 ether;
 
-        vm.startBroadcast();
+        vm.startBroadcast(DEFAULT_ANVIL_KEY);
         VRFCoordinatorV2_5Mock vrfCoordinatorMock = new VRFCoordinatorV2_5Mock(
             baseFee,
             gasPriceLink,
@@ -68,7 +72,8 @@ contract HelperConfig is Script {
                 entranceFee: 0.01 ether,
                 callbackGasLimit: 500000,
                 vrfCoordinator: address(vrfCoordinatorMock),
-                link: address(link)
+                link: address(link),
+                deployerKey: DEFAULT_ANVIL_KEY
             });
     }
 }

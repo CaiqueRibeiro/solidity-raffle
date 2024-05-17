@@ -53,6 +53,7 @@ contract RaffleTest is Test {
             entranceFee,
             callbackGasLimit,
             vrfCoordinator,
+            ,
 
         ) = helperConfig.activeNetworkConfig();
 
@@ -176,6 +177,7 @@ contract RaffleTest is Test {
     function testFullfillRandomWordsPicksAWinnerResetsAndSendsMoney()
         public
         raffleEnteredAndTimePassed
+        skipFork
     {
         uint256 additionalEntrants = 5; // 5 more players to join raffle
         uint256 initialIndex = 1; // index starts in 0, but as we have already one player, we need to start in 1
