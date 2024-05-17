@@ -10,7 +10,7 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/dev/vrf/libraries/V
  * @title Raffle - A lotery contract
  * @author Caique Ribeiro Rodrigues
  * @notice This contract is for creating a simple raflle
- * @dev Implements Chainlink VRFv2-5
+ * @dev Implements Chainlink VRFv2-5 and Chainlink Automation
  */
 contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__NotEnoughEth();
@@ -130,6 +130,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         s_recentWinner = winner;
         s_players = new address payable[](0);
         s_lastTimestamp = block.timestamp;
+        s_raffleState = RaffleState.OPEN;
 
         (bool success, ) = winner.call{value: address(this).balance}("");
         if (!success) {
@@ -169,5 +170,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     function getNumberOfPlayers() public view returns (uint256) {
         return s_players.length;
+    }
+
+    function getRecentWinner() public view returns (address) {
+        return s_recentWinner;
     }
 }

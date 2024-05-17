@@ -172,4 +172,46 @@ contract RaffleTest is Test {
             address(raffle)
         );
     }
+
+    function testFullfillRandomWordsPicksAWinnerResetsAndSendsMoney()
+        public
+        raffleEnteredAndTimePassed
+    {
+        uint256 additionalEntrants = 5; // 5 more players to join raffle
+        uint256 initialIndex = 1; // index starts in 0, but as we have already one player, we need to start in 1
+
+        for (
+            uint256 i = initialIndex;
+            i < initialIndex + additionalEntrants;
+            i++
+        ) {
+            address player = address(uint160(i));
+            hoax(player, STARTING_USER_BALANCE); // creates a new player with 10 ether (vm.prank + vm.deal)
+            raffle.enterRaffle{value: entranceFee}();
+        }
+
+        vm.recordLogs();
+        raffle.performUpkeep(""); // will call VRF requestRandomWords. Will work because of modifier raffleEnteredAndTimePassed
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestId = entries[1].topics[1]; // RequestedRaffleWinner event
+
+        uint256 previousTimestamp = raffle.getLastTimeStamp();
+
+        // pretend to be chainlink vrf and call fulfillRandomWords from Raffle contract
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
+            uint256(requestId),
+            address(raffle)
+        );
+
+        uint256 prize = entranceFee * (additionalEntrants + 1);
+
+        assert(uint256(raffle.getRaffleState()) == 0); // state should be reset to OPEN
+        assert(raffle.getRecentWinner() != address(0)); // winner should be set
+        assert(raffle.getNumberOfPlayers() == 0); // players should be reset
+        assert(raffle.getLastTimeStamp() > previousTimestamp); // timestamp should be updated
+        assert(
+            raffle.getRecentWinner().balance ==
+                STARTING_USER_BALANCE + prize - entranceFee
+        ); // winner should have received the money
+    }
 }
