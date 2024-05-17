@@ -4,11 +4,14 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
+import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/mocks/VRFCoordinatorV2_5Mock.sol";
 import {Raffle} from "../src/Raffle.sol";
 import {DeployRaffle} from "../script/DeployRaffle.s.sol";
 import {HelperConfig} from "../script/HelperConfig.s.sol";
 
 contract RaffleTest is Test {
+    error InvalidRequest();
+
     Raffle raffle;
     HelperConfig helperConfig;
 
@@ -29,6 +32,13 @@ contract RaffleTest is Test {
         raffle.enterRaffle{value: entranceFee}();
         vm.warp(block.timestamp + interval + 1);
         vm.roll(block.number + 1);
+        _;
+    }
+
+    modifier skipFork() {
+        if (block.chainid != 31337) {
+            return;
+        }
         _;
     }
 
@@ -150,5 +160,16 @@ contract RaffleTest is Test {
         Raffle.RaffleState raffleState = raffle.getRaffleState();
         assert(uint256(requestedId) > 0);
         assert(uint256(raffleState) == 1);
+    }
+
+    // Fuzz testing. Foundry will automatically generate the random numbers and call it multiple times
+    function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpkeep(
+        uint256 randomRequestId
+    ) public raffleEnteredAndTimePassed skipFork {
+        vm.expectRevert(InvalidRequest.selector);
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
+            randomRequestId,
+            address(raffle)
+        );
     }
 }
