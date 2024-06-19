@@ -11,9 +11,6 @@ A cool lottery smart contract that uses Chainlink VRFv2_5 and Chainlink Automati
 | 🕐  | **Chainlink Automations** Chainlink platform run smart contracts function over time or by triggered events                                                                                        |
 | 🧰   | **Foundry** Best smart contract development toolchain..|
 
-## Live demo
-https://selito.vercel.app/login
-
 ## Features
 
 |     | Features                                                                                                             |
